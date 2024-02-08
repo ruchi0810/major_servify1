@@ -52,6 +52,16 @@ export const updateServiceProvider = async (req, res) => {
     const updatedData = await ServiceProvider.findByIdAndUpdate(id, req.body, {
       new: true,
     });
+    // await Review.updateMany(
+    //   { serviceProviderId: id },
+    //   {
+    //     $set: {
+    //       "serviceProviderId.spname": req.body.spname,
+    //       "serviceProviderId.spemail": req.body.spemail,
+    //     },
+    //   }
+    // );
+
     res.status(200).json(updatedData);
   } catch (error) {
     res.status(500).json({ error: error });
@@ -130,6 +140,7 @@ export const addReviewToServiceProvider = async (req, res) => {
       return res.status(404).json({ msg: "Service provider not found" });
     }
     const reviewData = req.body;
+    const userId = new mongoose.Types.ObjectId(reviewData.userId); // Convert userId to ObjectId
     // console.log("Received review data:", reviewData); // Add this line
 
     const review = new Review({ ...reviewData, serviceProviderId });

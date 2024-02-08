@@ -1,5 +1,6 @@
 //apis
 import user from "../model/userModel.js";
+import Review from "../model/reviewModel.js";
 
 export const create = async (req, res) => {
   try {
@@ -53,6 +54,15 @@ export const update = async (req, res) => {
     const updatedData = await user.findByIdAndUpdate(id, req.body, {
       new: true,
     });
+    // await Review.updateMany(
+    //   { userId: id },
+    //   {
+    //     $set: {
+    //       "userId.name": req.body.name,
+    //       "userId.mobile": req.body.mobile,
+    //     },
+    //   }
+    // );
     res.status(200).json(updatedData);
   } catch (error) {
     res.status(500).json({ error: error });

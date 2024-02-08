@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Review from "./reviewModel.js"; // Import the Review model
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -26,4 +27,5 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
 });
+
 export default mongoose.model("user", userSchema);
