@@ -1,5 +1,7 @@
 import ServiceProvider from "../model/serviceProviderModel.js";
 import Review from "../model/reviewModel.js";
+import User from "../model/userModel.js";
+import mongoose from "mongoose"; // Import mongoose
 
 export const createServiceProvider = async (req, res) => {
   try {
@@ -131,19 +133,68 @@ export const getServiceProviderByServiceName = async (req, res) => {
 };
 // localhost:8000/api/service-providers/getallquery/carpenter
 
+// export const addReviewToServiceProvider = async (req, res) => {
+//   try {
+//     const serviceProviderId = req.params.id;
+
+//     const serviceProvider = await ServiceProvider.findById(serviceProviderId);
+//     if (!serviceProvider) {
+//       return res.status(404).json({ msg: "Service provider not found" });
+//     }
+//     const reviewData = req.body;
+//     const userId = new mongoose.Types.ObjectId(reviewData.userId); // Convert userId to ObjectId
+//     // console.log("Received review data:", reviewData); // Add this line
+
+//     const review = new Review({ ...reviewData, serviceProviderId });
+//     const savedReview = await review.save();
+
+//     const updatedServiceProvider = await ServiceProvider.findByIdAndUpdate(
+//       serviceProviderId,
+//       { $push: { reviews: savedReview._id } },
+//       { new: true }
+//     );
+
+//     // console.log("Updated serviceProvider data:", serviceProvider); // Add this line
+
+//     res.status(200).json(savedReview);
+//   } catch (error) {
+//     // console.error("Error in addReviewToServiceProvider:", error); // Add this line
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 export const addReviewToServiceProvider = async (req, res) => {
   try {
     const serviceProviderId = req.params.id;
+    const userId = req.body.userId;
+
+    // Check if the user has already given a review to this service provider
+    const existingReview = await Review.findOne({
+      serviceProviderId,
+      userId,
+    });
+
+    if (existingReview) {
+      return res.status(400).json({
+        msg: "User has already given a review to this service provider",
+      });
+    }
 
     const serviceProvider = await ServiceProvider.findById(serviceProviderId);
     if (!serviceProvider) {
       return res.status(404).json({ msg: "Service provider not found" });
     }
-    const reviewData = req.body;
-    const userId = new mongoose.Types.ObjectId(reviewData.userId); // Convert userId to ObjectId
-    // console.log("Received review data:", reviewData); // Add this line
 
-    const review = new Review({ ...reviewData, serviceProviderId });
+    const reviewData = req.body;
+
+    // Convert userId to ObjectId
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    const review = new Review({
+      ...reviewData,
+      serviceProviderId,
+      userId: userObjectId,
+    });
     const savedReview = await review.save();
 
     const updatedServiceProvider = await ServiceProvider.findByIdAndUpdate(
@@ -152,11 +203,8 @@ export const addReviewToServiceProvider = async (req, res) => {
       { new: true }
     );
 
-    // console.log("Updated serviceProvider data:", serviceProvider); // Add this line
-
     res.status(200).json(savedReview);
   } catch (error) {
-    // console.error("Error in addReviewToServiceProvider:", error); // Add this line
     res.status(500).json({ error: error.message });
   }
 };
@@ -167,3 +215,32 @@ export const addReviewToServiceProvider = async (req, res) => {
 //   "rating": 5,
 //   "comment": "Great service!"
 // }
+
+export const getReviewsByServiceProviderAndUser = async (req, res) => {
+  try {
+    const { serviceProviderId, userId } = req.params;
+
+    // Ensure that the service provider and user exist
+    const serviceProvider = await ServiceProvider.findById(serviceProviderId);
+    const user = await User.findById(userId);
+
+    if (!serviceProvider || !user) {
+      return res
+        .status(404)
+        .json({ msg: "Service provider or user not found" });
+    }
+
+    // Retrieve reviews for the specified service provider
+    const reviews = await Review.find({ serviceProviderId })
+      .sort({ userId: userId === "my-user-id" ? -1 : 1, createdAt: -1 })
+      .populate({
+        path: "userId",
+        select: "name mobile",
+      });
+
+    res.status(200).json(reviews);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+//GET http://localhost:8000/api/service-providers/SP_ID/reviews/USER_ID

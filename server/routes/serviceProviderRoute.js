@@ -8,6 +8,7 @@ import {
   SearchServiceProvider_byservice,
   addReviewToServiceProvider,
   getServiceProviderByServiceName,
+  getReviewsByServiceProviderAndUser,
 } from "../controller/serviceProviderContoller.js";
 const route = express.Router();
 
@@ -19,5 +20,9 @@ route.delete("/delete/:id", deleteServiceProvider);
 route.post("/search", SearchServiceProvider_byservice);
 route.get("/getallquery/:serviceName", getServiceProviderByServiceName);
 route.post("/:id/reviews", addReviewToServiceProvider);
+route.get(
+  "/:serviceProviderId/reviews/:userId",
+  getReviewsByServiceProviderAndUser
+);
 
 export default route;
