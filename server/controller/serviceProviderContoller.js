@@ -2,6 +2,7 @@ import ServiceProvider from "../model/serviceProviderModel.js";
 import Review from "../model/reviewModel.js";
 import User from "../model/userModel.js";
 import mongoose from "mongoose"; // Import mongoose
+import AllDeletedServiceProvider from "../model/allDeletedServiceProviderModel.js";
 
 export const createServiceProvider = async (req, res) => {
   try {
@@ -74,15 +75,62 @@ export const updateServiceProvider = async (req, res) => {
 export const deleteServiceProvider = async (req, res) => {
   try {
     const id = req.params.id;
-    const userExist = await ServiceProvider.findById(id);
-    if (!userExist) {
-      return res.status(404).json({ msg: "Service provider data not found" });
-    }
-    await ServiceProvider.findByIdAndDelete(id);
+    const serviceProviderExist = await ServiceProvider.findById(id);
 
-    res.status(200).json({ msg: "service provider deleted successfully" });
+    if (!serviceProviderExist) {
+      return res.status(404).json({ msg: "Service provider not found" });
+    }
+    // Create an entry in the AllDeletedServiceProvider collection
+    // const deletedServiceProvider = new AllDeletedServiceProvider({
+    //   serviceProviderId: serviceProviderExist._id,
+    //   reviews: serviceProviderExist.reviews, // Copy reviews from the original service provider
+    // });
+    // await deletedServiceProvider.save();
+
+    // Delete the service provider
+    // await ServiceProvider.findByIdAndDelete(id);
+
+    // Fetch the associated reviews
+    // const reviews = await Review.find({ serviceProviderId: id });
+    const reviews = await Review.find({ serviceProviderId: id }).populate(
+      "userId",
+      "name mobile"
+    );
+    const formattedReviews = reviews.map((review) => ({
+      userId: {
+        _id: review.userId._id,
+        name: review.userId.name,
+        mobile: review.userId.mobile,
+      },
+      rating: review.rating,
+      review: review.reviews,
+    }));
+
+    // Create an entry in the AllDeletedServiceProvider collection
+    const deletedServiceProvider = new AllDeletedServiceProvider({
+      serviceProviderId: serviceProviderExist._id,
+      serviceProviderInfo: {
+        spname: serviceProviderExist.spname,
+        spmobile: serviceProviderExist.spmobile,
+        spaddress: serviceProviderExist.spaddress,
+        spcity: serviceProviderExist.spcity,
+        spservicename: serviceProviderExist.spservicename,
+        spemail: serviceProviderExist.spemail,
+        sppassword: serviceProviderExist.sppassword,
+      },
+      reviews: formattedReviews,
+    });
+
+    // Save the entry to the AllDeletedServiceProvider collection
+    await deletedServiceProvider.save();
+
+    // Delete the service provider and associated reviews
+    await ServiceProvider.findByIdAndDelete(id);
+    await Review.deleteMany({ serviceProviderId: id });
+
+    res.status(200).json({ msg: "Service provider deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: error });
+    res.status(500).json({ error: error.message });
   }
 };
 

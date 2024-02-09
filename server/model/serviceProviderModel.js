@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import Review from "../model/reviewModel.js"; // Import the Review model
+import ServiceProvider from "../model/serviceProviderModel.js";
+import User from "../model/userModel.js";
 
 const serviceProviderSchema = new mongoose.Schema({
   spname: {
@@ -35,6 +38,14 @@ const serviceProviderSchema = new mongoose.Schema({
       ref: "Review",
     },
   ],
+});
+serviceProviderSchema.pre("findOneAndDelete", async function (next) {
+  const serviceProviderId = this._conditions._id;
+
+  // Delete associated reviews
+  await Review.deleteMany({ serviceProviderId });
+
+  next();
 });
 export default mongoose.model("ServiceProvider", serviceProviderSchema);
 //table nu naam aekvachan ma
