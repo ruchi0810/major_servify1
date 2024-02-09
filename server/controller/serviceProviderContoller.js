@@ -142,6 +142,7 @@ export const SearchServiceProvider_byservice = async (req, res) => {
       $or: [
         {
           spservicename: { $regex: `\\b${query}\\b`, $options: "i" },
+
           // for exact term finding
         },
         // {
@@ -280,13 +281,28 @@ export const getReviewsByServiceProviderAndUser = async (req, res) => {
 
     // Retrieve reviews for the specified service provider
     const reviews = await Review.find({ serviceProviderId })
-      .sort({ userId: userId === "my-user-id" ? -1 : 1, createdAt: -1 })
+      .sort({ createdAt: -1 }) // Sort by creation date in descending order
       .populate({
         path: "userId",
         select: "name mobile",
       });
 
-    res.status(200).json(reviews);
+    // Separate reviews by the specified user and other users
+    const userReviews = [];
+    const otherUserReviews = [];
+
+    reviews.forEach((review) => {
+      if (review.userId._id.toString() === userId) {
+        userReviews.unshift(review); // Add user's reviews to the beginning of the array
+      } else {
+        otherUserReviews.push(review); // Add other users' reviews to the end of the array
+      }
+    });
+
+    // Combine user reviews and other user reviews
+    const combinedReviews = userReviews.concat(otherUserReviews);
+
+    res.status(200).json(combinedReviews);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
