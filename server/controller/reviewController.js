@@ -5,6 +5,7 @@ export const createReview = async (req, res) => {
   try {
     const reviewData = new Review(req.body);
     const savedData = await reviewData.save();
+    io.emit("newReview", savedData);
     res.status(200).json(savedData);
   } catch (error) {
     res.status(500).json({ error: error.message });
