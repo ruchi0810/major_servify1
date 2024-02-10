@@ -42,12 +42,14 @@ import { Server } from "socket.io"; // Import the Server class from socket.io
 import userRoute from "./routes/userRoute.js";
 import serviceProviderRoute from "./routes/serviceProviderRoute.js";
 import reviewRoute from "./routes/reviewRoute.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
 const server = http.createServer(app); // Create an HTTP server
 const io = new Server(server); // Attach Socket.IO to the HTTP server
 
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(cors());
 dotenv.config();
 

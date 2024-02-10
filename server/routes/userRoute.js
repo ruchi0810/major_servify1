@@ -5,10 +5,14 @@ import {
   getAll,
   getOne,
   update,
+  signup,
+  login,
 } from "../controller/userController.js";
 const route = express.Router();
 
 route.post("/create", create);
+route.post("/signup", signup);
+route.get("/login", login);
 route.get("/getall", getAll);
 route.get("/getone/:id", getOne);
 route.put("/update/:id", update);
